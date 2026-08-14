@@ -13,25 +13,6 @@ jobs:
     steps:  
       - name: Get code and checkout
         uses: actions/checkout@v4
-            
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-            
-      - name: Install dependencies
-        run: npm install
-            
-      - name: Build Project
-        run: |
-          branch="${GITHUB_REF##*/}"
-          if [[ "$branch" == "main" ]]; then
-            echo "Building for production"
-            npm run build:prod
-          elif [[ "$branch" == "develop" ]]; then
-            echo "Building for QA"
-            npm run build:qa
-          fi
 
       - name: Set deployment path
         id: set_path
