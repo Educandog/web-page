@@ -1,0 +1,65 @@
+name: Deployment Educandog Web Page
+
+on:
+  push:
+    branches: 
+      - main
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+        
+    steps:  
+      - name: Get code and checkout
+        uses: actions/checkout@v4
+            
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+            
+      - name: Install dependencies
+        run: npm install
+            
+      - name: Build Project
+        run: |
+          branch="${GITHUB_REF##*/}"
+          if [[ "$branch" == "main" ]]; then
+            echo "Building for production"
+            npm run build:prod
+          elif [[ "$branch" == "develop" ]]; then
+            echo "Building for QA"
+            npm run build:qa
+          fi
+
+      - name: Set deployment path
+        id: set_path
+        run: |
+          branch="${GITHUB_REF##*/}"
+          if [[ "$branch" == "main" ]]; then
+            echo "DEPLOY_PATH=/var/www/html/educandog-web-page" >> $GITHUB_ENV
+          elif [[ "$branch" == "develop" ]]; then
+            echo "DEPLOY_PATH=/var/www/html/educandog-web-page" >> $GITHUB_ENV
+          fi
+
+      - name: Deploying project on the server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          source: "*"
+          target: ${{ env.DEPLOY_PATH }}
+
+      - name: Confirmation of successful deployment
+        run: |
+          branch="${GITHUB_REF##*/}"
+          if [[ "$branch" == "develop" ]]; then
+            echo "✅ Deployment in QA environment completed successfully!"
+          elif [[ "$branch" == "main" ]]; then
+            echo "✅ Deployment in Production environment completed successfully!"
+          else
+            echo "✅ Deployment on branch '$branch' completed successfully!"
+          fi
